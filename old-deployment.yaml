@@ -1,0 +1,67 @@
+﻿apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: old-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: old-nginx
+  template:
+    metadata:
+      labels:
+        app: old-nginx
+    spec:
+      containers:
+      - image: registry.cn-hangzhou.aliyuncs.com/guoxudong/nginx:old
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 250m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        name: nginx-web
+        ports:
+        - containerPort: 80
+          name: web
+          protocol: TCP
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 300
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 300
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: old-deployment-svc
+  namespace: default
+  labels:
+    app: old-nginx
+spec:
+  selector:
+    app: old-nginx
+  ports:
+  - name: web
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+
+  

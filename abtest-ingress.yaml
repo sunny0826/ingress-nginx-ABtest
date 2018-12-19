@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: abtest-ingress-example
+  annotations:
+      nginx.ingress.kubernetes.io/service-match: 'new-deployment-svc: cookie("kk", /^test$/)'     #在cookie中满足kk=test的才会访问到新版本的服务
+      #nginx.ingress.kubernetes.io/service-match: |      # 请求头中满足正则匹配foo=bar的请求才会被路由到新版本服务new-nginx中
+       #   new-oss-devops-svc: header("foo", /^bar$/)
+spec:
+  rules:
+  - host: abtest.xxx.com    #这里请自行修改为自己的域名，没有域名的推荐使用.xip.io后缀域名
+    http:
+      paths:
+      # 老版本服务
+      - path: /
+        backend:
+          serviceName: old-deployment-svc
+          servicePort: 80
+      # 新版本服务
+      - path: /
+        backend:
+          serviceName: new-deployment-svc
+          servicePort: 80
